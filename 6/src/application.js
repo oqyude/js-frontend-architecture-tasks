@@ -41,5 +41,65 @@ const validate = (fields) => {
 };
 
 // BEGIN
+export default () => {
+  const container = document.querySelector('[data-container="sign-up"]');
+  const form = document.querySelector('[data-form="sign-up"]');
+  const submit = form.querySelector('[type="submit"]');
+  const fields = {
+    name: '',
+    email: '',
+    password: '',
+    passwordConfirmation: '',
+  };
+
+  const state = {
+    fields,
+    errors: {},
+    valid: false,
+    processState: 'filling',
+  };
+
+  const render = () => {
+    Object.keys(state.fields).forEach((name) => {
+      const input = form.elements[name];
+      const error = state.errors[name];
+      const oldFeedback = input.nextElementSibling;
+
+      input.classList.remove('is-invalid');
+      if (oldFeedback && oldFeedback.classList.contains('invalid-feedback')) {
+        oldFeedback.remove();
+      }
+
+      if (error) {
+        input.classList.add('is-invalid');
+        const feedback = document.createElement('div');
+        feedback.classList.add('invalid-feedback');
+        feedback.textContent = error.message;
+        input.after(feedback);
+      }
+    });
+
+    submit.disabled = !state.valid || state.processState === 'sending';
+  };
+
+  form.addEventListener('input', (event) => {
+    state.fields[event.target.name] = event.target.value;
+    state.errors = validate(state.fields);
+    state.valid = isEmpty(state.errors);
+    render();
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    state.processState = 'sending';
+    render();
+
+    await axios.post('http://localhost/users', state.fields);
+    container.textContent = 'User Created!';
+  });
+
+  render();
+};
 
 // END
